@@ -4,8 +4,11 @@ import datetime
 import time
 
 
-
 def static_bao_ming():
+    '''
+    静态地报名，固定化的报名流程，或者叫“死板的”
+    :return:
+    '''
     vc = VC('emulator-5554')
     qqmail = QQMail()
     vc.click_by_words("我要报名")
@@ -19,8 +22,15 @@ def static_bao_ming():
     #     time.sleep(600)
     #     print(time.localtime())
 
+def print_all_act( wordsList):
+    for itemDict in wordsList:
+        print(itemDict)
 
 def zhi_neng_bao_ming():
+    '''
+    “智能报名”：
+    :return:
+    '''
     vc = VC('emulator-5554')
     qqmail = QQMail()
     # vc.click_by_words("PU")
@@ -33,54 +43,56 @@ def zhi_neng_bao_ming():
     # vc.click_by_words("本校活动")
     # time.sleep(2)
     # print(vc.get_ui_words())
-    vc.click_by_words("状态")
-    time.sleep(1)
-    vc.click_by_words("未开始")
+    # vc.click_by_words("状态")
+    # time.sleep(1)
+    # vc.click_by_words("未开始")
+    # vc.click_by_words("排序")
+    # time.sleep(1)
+    # vc.click_by_words("最热排序")
     wordsList = vc.get_ui_words()
-    # for itemDict in wordsList:
-    #     print(itemDict)
-    # before_refresh_activity_count = len(wordsList)
-    # print(before_refresh_activity_count)
+    print_all_act(wordsList)
     score = []  # 各活动的学时属性字符串组成的列表，待排序
-    for itemDict in wordsList:
-        if '社会实践活动学时' in itemDict['words']:
-            score.append(itemDict['words'])
-    before_refresh_activity_count = len(score)
-    print(before_refresh_activity_count)
+    good_activities = set()  # the define of good is the activity information including '校大礼堂'
+    # vc.input_swipe([540, 1600], [540, 1900])  # 刷新页面
 
     while True:
-        vc.input_swipe([540, 1600], [540, 1900])  # 刷新页面
-        time.sleep(1)
-        wordsList = vc.get_ui_words()
-        # after_refresh_activity_count = len(wordsList)
-        # print(after_refresh_activity_count)
-        for itemDict in wordsList:
-            if '社会实践活动学时' in itemDict['words']:
-                score.append(itemDict['words'])
-        after_refresh_activity_count = len(score)
-        print(after_refresh_activity_count)
 
+
+        before_refresh_activity_count = len(good_activities)
+        print(before_refresh_activity_count)
+
+        # 模拟人眼看：信息提取
+        wordsList = vc.get_ui_words()
+        # 模拟注意力：关注点为【地点:校大礼堂】
+        for key_value in wordsList:
+            if '校大礼堂' in key_value['words']:
+                good_activities.add(key_value['words'])
+        # 模拟手指滑动：更新页面信息
+        # vc.input_swipe([540, 1800], [540, 1200])
+        vc.input_swipe([540, 1600], [540, 1900])  # 刷新页面
+
+        time.sleep(2)
+        after_refresh_activity_count = len(good_activities)
+        print(after_refresh_activity_count)
         new_activity_count = after_refresh_activity_count - before_refresh_activity_count
 
         if new_activity_count >= 1:
-            qqmail.send_mail("刚刚有" + str(new_activity_count) + "个活动发布。")
-            score = []  # 各活动的学时属性字符串组成的列表，待排序
-            for itemDict in wordsList:
-                if '社会实践活动学时' in itemDict['words']:
-                    score.append(itemDict['words'])
-            vc.click_by_words(sorted(score)[0])  # 点击最佳活动（学时数最高）
-            time.sleep(1)
-            vc.click_by_words("我要报名")
-            break
+            print_all_act(good_activities)
+            qqmail.send_mail("刚刚有" + str(new_activity_count) + "个校大礼堂活动发布。")
+
         else:
             print("暂无新活动发布" + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-        time.sleep(600)  # 刷新周期：10分钟
+        time.sleep(1800)  # 刷新周期：10分钟
         # while end
 
 
-if __name__ == "__main__":
-    '''h表示设定的小时，m为设定的分钟'''
+
+def dao_ji_shi():
+    '''
+    倒计时：用于事先知道报名时间，自动抢报
+    h表示设定的小时，m为设定的分钟
+    '''
     h = 0
     m = 0
     s = 0
@@ -95,6 +107,8 @@ if __name__ == "__main__":
         # 刷新周期
         time.sleep(1)
         # 做正事，一天做一次
+if __name__ == "__main__":
+    zhi_neng_bao_ming()
 
     # for item in sorted(score): 测试默认排序规则
     #     print(item)
